@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.AdminMapper">
+
+    <select id="login" resultType="Admin" parameterType="Admin">
+        select * from Admin where aaccount=#{aaccount} and apassword = #{apassword}
+    </select>
+
+    <select id="allNews" resultMap="allNewsMap">
+        select n.nid , n.ntitle , n.ncontent , n.ntime , n.nstate  , p.pname
+        from news n
+            left join person p on n.npid = p.pid
+
+    </select>
+
+    <resultMap id="allNewsMap" type="news">
+        <id column="nid" property="nid"></id>
+        <result column="ntitle" property="ntitle"></result>
+        <result column="ntime" property="ntime"></result>
+        <result column="ncontent" property="ncontent"></result>
+        <result column="nstate" property="nstate"></result>
+        <association property="person" javaType="Person">
+            <result column="pname" property="pname"></result>
+        </association>
+    </resultMap>
+
+    <update id="newsChecked" parameterType="int">
+        update news set nstate = '已审核' where nid = #{nid}
+    </update>
+
+    <update id="newsNotChecked" parameterType="int">
+        update news set nstate = '未审核' where nid = #{nid}
+    </update>
+
+    <select id="allRemarks" resultMap="allRemarksMap">
+        select r.rid, r.rcontent , r.rstate  , r.rtime , p.pname , n.nid , n.ntitle
+        from remark r , person p   ,news n
+            where r.rpid = p.pid  and r.rnid = n.nid
+    </select>
+
+    <resultMap id="allRemarksMap" type="Remark">
+        <id column="rid" property="rid"></id>
+        <result column="rcontent" property="rcontent"></result>
+        <result column="rstate" property="rstate"></result>
+        <result column="rtime" property="rtime"></result>
+        <association property="person" javaType="Person">
+            <result column="pname" property="pname"></result>
+        </association>
+        <association property="news" javaType="news">
+            <id column="nid" property="nid"></id>
+            <result column="ntitle" property="ntitle"></result>
+        </association>
+    </resultMap>
+
+    <select id="searchNewByNid" resultMap="searchNewByNidMap" parameterType="int">
+        select  n.nid ,n.ntitle , n.ncontent , n.ntime , p.pname
+        from news n  left join person p on n.npid = p.pid
+                 where n.nid = #{nid}
+    </select>
+
+    <resultMap id="searchNewByNidMap" type="news">
+        <id column="nid" property="nid"></id>
+        <result column="ntitle" property="ntitle"></result>
+        <result column="ncontent" property="ncontent"></result>
+        <result column="ntime" property="ntime"></result>
+        <association property="person" javaType="Person">
+            <result column="pname" property="pname"></result>
+        </association>
+    </resultMap>
+
+    <update id="remarkChecked" parameterType="int">
+        update remark set rstate = '已审核' where rid = #{rid}
+    </update>
+
+    <update id="remarkNotChecked" parameterType="int">
+        update remark set rstate = '未审核' where rid = #{rid}
+    </update>
+
+    <select id="newsPrize" resultMap="newsPrizeMap">
+        select p.pid ,p.pname , p.page , p.psex , n.nid , count(nid) "新闻发布量"
+        from person p left join news n on  p.pid = n.npid
+        group by pid order by 新闻发布量 desc
+    </select>
+
+    <resultMap id="newsPrizeMap" type="person">
+        <id column="pid" property="pid"></id>
+        <result column="pname" property="pname"></result>
+        <result column="page" property="page"></result>
+        <result column="psex" property="psex"></result>
+        <result column="新闻发布量" property="newsNum"></result>
+        <collection property="news" ofType="news">
+            <id column="nid" property="nid"></id>
+        </collection>
+    </resultMap>
+
+    <select id="remarksPrize" resultMap="remarksPrizeMap">
+        select p.pid ,p.pname , p.page , p.psex , r.rid , count(rid) "评论数"
+        from person p left join remark r  on p.pid = r.rpid
+        group by p.pid order by 评论数 desc
+    </select>
+
+    <resultMap id="remarksPrizeMap" type="person">
+        <id column="pid" property="pid"></id>
+        <result column="pname" property="pname"></result>
+        <result column="page" property="page"></result>
+        <result column="psex" property="psex"></result>
+        <result column="评论数" property="remarkNum"></result>
+        <collection property="remark" ofType="remark">
+            <id column="rid" property="rid"></id>
+        </collection>
+    </resultMap>
+
+
+
+    <select id="seeAdmin" resultType="admin">
+        select * from admin where aname = '林茂彬'
+    </select>
+
+
+
+
+</mapper>

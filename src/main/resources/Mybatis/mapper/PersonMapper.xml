@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.PersonMapper">
+
+    <select id="login" resultType="Person" parameterType="Person">
+        select * from person where paccount = #{paccount} and ppassword = #{ppassword}
+    </select>
+
+    <select id="loginByPhone" resultType="Person" parameterType="string">
+        select pid from person where pphone = #{phone}
+    </select>
+
+    <select id="sameAccount" resultType="Person" parameterType="Person">
+        select * from person where paccount = #{paccount}
+    </select>
+
+    <insert id="register"  parameterType="Person">
+        insert into person(paccount , ppassword , pname , psex , page) values(#{paccount} , #{ppassword} , #{pname} , #{psex} , #{page})
+    </insert>
+
+    <select id="allNews" resultMap="allNewsMap">
+        select n.nid , n.ntitle  , n.ntime , r.rid , count(rid) "评论量"
+        from news n left join remark r on n.nid = r.rnid  and  r.rstate = '已审核'
+        where  n.nstate = '已审核'
+        group by nid
+        order by ntime desc
+    </select>
+
+    <resultMap id="allNewsMap" type="news">
+        <id column="nid" property="nid"></id>
+        <result column="ntitle" property="ntitle"></result>
+        <result column="ntime" property="ntime"></result>
+        <result column="评论量" property="remarkNum"></result>
+        <collection property="remark" ofType="Remark">
+            <id column="rid" property="rid"></id>
+        </collection>
+    </resultMap>
+
+    <insert id="release" parameterType="map">
+        insert into news (ntitle , ncontent , nstate , npid , ntime) values   (#{ntitle} , #{ncontent} , '未审核' , #{pid}, #{ntime})
+    </insert>
+
+    <select id="myRelease" resultMap="myReleaseMap" parameterType="Person">
+        select pid , pname , n.*  from person p
+            left join news n on p.pid =  n.npid
+            where p.pid = #{pid}
+            order by ntime desc
+    </select>
+
+    <resultMap id="myReleaseMap" type="Person">
+        <id column="pid" property="pid"></id>
+        <result column="pname" property="pname"></result>
+        <collection property="news" ofType="news">
+            <id column="nid" property="nid"></id>
+            <result column="ntitle" property="ntitle"></result>
+            <result column="ncontent" property="ncontent"></result>
+            <result column="nstate" property="nstate"></result>
+            <result column="ntime" property="ntime"></result>
+            <result column="nlike" property="nlike"></result>
+            <result column="nclick" property="nclick"></result>
+        </collection>
+    </resultMap>
+
+    <select id="myReleaseAllClickMany" resultMap="myReleaseMap" parameterType="Person">
+        select pid , pname , n.*  from person p
+                                           left join news n on p.pid =  n.npid
+        where p.pid = #{pid}
+        order by nclick desc
+    </select>
+
+    <select id="myReleaseAllClickLow" resultMap="myReleaseMap" parameterType="Person">
+        select pid , pname , n.*  from person p
+                                           left join news n on p.pid =  n.npid
+        where p.pid = #{pid}
+        order by nclick ASC
+    </select>
+
+    <select id="myReleaseCheckedClickMany" resultMap="myReleaseMap" parameterType="Person">
+        select pid , pname , n.*  from person p
+                                           left join news n on p.pid =  n.npid
+        where p.pid = #{pid} and n.nstate = '已审核'
+        order by nclick desc
+    </select>
+
+    <select id="myReleaseCheckedClickLow" resultMap="myReleaseMap" parameterType="Person">
+        select pid , pname , n.*  from person p
+                                           left join news n on p.pid =  n.npid
+        where p.pid = #{pid} and n.nstate = '已审核'
+        order by nclick ASC
+    </select>
+
+    <select id="myReleaseNotCheckedClickMany" resultMap="myReleaseMap" parameterType="Person">
+        select pid , pname , n.*  from person p
+                                           left join news n on p.pid =  n.npid
+        where p.pid = #{pid} and n.nstate = '未审核'
+        order by nclick desc
+    </select>
+
+    <select id="myReleaseNotCheckedClickLow" resultMap="myReleaseMap" parameterType="Person">
+        select pid , pname , n.*  from person p
+                                           left join news n on p.pid =  n.npid
+        where p.pid = #{pid} and n.nstate = '未审核'
+        order by nclick ASC
+    </select>
+
+
+
+    <select id="searchpnameBynid" resultType="string">
+        select pname from person p , news n where n.nid = #{nid} and n.npid=p.pid
+    </select>
+
+    <select id="searchNewsBynid" resultMap="searchNewsBynidMap" parameterType="int">
+        select  n.ncontent , n.nlike , n.nclick , r.rid , r.rcontent, r.rtime ,r.rstate,  p.pid , p.pname ,p.psex , p.page
+        from news n
+            left join Remark r on  n.nid = r.rnid and r.rstate='已审核'
+            left join Person p on r.rpid = p.pid
+        where n.nid = #{nid}
+    </select>
+
+    <resultMap id="searchNewsBynidMap" type="news">
+        <result column="ncontent" property="ncontent"></result>
+        <result column="nlike" property="nlike"></result>
+        <result column="nclick" property="nclick"></result>
+        <collection property="remark" ofType="Remark">
+            <id column="rid" property="rid"></id>
+            <result column="rcontent" property="rcontent"></result>
+            <result column="rtime" property="rtime"></result>
+            <result column="rstate" property="rstate"></result>
+            <association property="person" javaType="Person">
+                <id column="pid" property="pid"></id>
+                <result column="pname" property="pname"></result>
+                <result column="psex" property="psex"></result>
+                <result column="page" property="page"></result>
+            </association>
+        </collection>
+    </resultMap>
+
+    <insert id="toRemark" parameterType="Map">
+        insert into remark(rcontent , rtime , rstate , rpid , rnid , raid) values(#{rcontent} , #{rtime} , '未审核' , #{rpid} , #{rnid} , 1)
+    </insert>
+
+
+    <select id="searchPersonBypid" parameterType="int" resultType="Person" >
+        select pname , paccount , ppassword , psex , page
+             from person
+            where pid = #{pid}
+    </select>
+
+    <select id="searchRemarksBypid" parameterType="int" resultMap="searchRemarksBypidMap" >
+        select rid ,  rcontent , rtime , rstate , pid,  pname , nid , ntitle ,  ntime
+        from remark r , person p , news n
+        where rpid = #{pid} and pid  = npid and rnid = nid
+    </select>
+
+    <resultMap id="searchRemarksBypidMap" type="Remark">
+        <id column="rid" property="rid"></id>
+        <result column="rcontent" property="rcontent"></result>
+        <result column="rtime" property="rtime"></result>
+        <result column="rstate" property="rstate"></result>
+
+        <association property="person" javaType="Person">
+            <id column="pid" property="pid"></id>
+            <result column="pname" property="pname"></result>
+        </association>
+
+        <association property="news" javaType="news">
+            <id column="nid" property="nid"></id>
+            <result column="ntitle" property="ntitle"></result>
+            <result column="ncontent" property="ncontent"></result>
+            <result column="ntime" property="ntime"></result>
+        </association>
+
+    </resultMap>
+
+    <update id="changePname" parameterType="Person">
+        update person set pname = #{pname} where pid = #{pid}
+    </update>
+
+    <update id="changePpassword" parameterType="Person">
+        update person set ppassword = #{ppassword} where pid = #{pid}
+    </update>
+
+      <select id="getAllNewsByRemarkManyOrder" resultMap="getAllNewsByRemarkManyOrderMap">
+          SELECT n.nid , n.ntitle ,  n.ntime , n.ncontent , n.nstate , n.ntitle , n.ncontent ,  r.rid , COUNT(rnid) "评论数"
+          FROM remark r
+              RIGHT JOIN news  n ON r.rnid = n.nid  AND  r.rstate="已审核"
+          where  n.nstate="已审核"
+          GROUP BY nid
+          ORDER BY 评论数 DESC
+      </select>
+
+    <resultMap id="getAllNewsByRemarkManyOrderMap" type="news">
+        <id column="nid" property="nid"></id>
+        <result column="ntitle" property="ntitle"></result>
+        <result column="ntime" property="ntime"></result>
+        <result column="ncontent" property="ncontent"></result>
+        <result column="nstate" property="nstate"></result>
+        <result column="评论数" property="remarkNum"></result>
+        <collection property="remark" ofType="Remark">
+            <id column="rid" property="rid"></id>
+        </collection>
+    </resultMap>
+
+    <select id="getAllNewsByRemarkLowOrder" resultMap="getAllNewsByRemarkManyOrderMap">
+        SELECT n.nid , n.ntitle ,  n.ntime , n.ncontent , n.nstate , n.ntitle , n.ncontent ,  r.rid , COUNT(rnid) "评论数"
+        FROM remark r
+            RIGHT JOIN news  n ON r.rnid = n.nid  AND  r.rstate="已审核"
+        where  n.nstate="已审核"
+        GROUP BY nid
+        ORDER BY 评论数 ASC
+    </select>
+
+    <resultMap id="getAllNewsByRemarkLowOrderMap" type="news">
+        <id column="nid" property="nid"></id>
+        <result column="ntitle" property="ntitle"></result>
+        <result column="ntime" property="ntime"></result>
+        <result column="ncontent" property="ncontent"></result>
+        <result column="nstate" property="nstate"></result>
+        <result column="评论数" property="remarkNum"></result>
+        <collection property="remark" ofType="Remark">
+            <id column="rid" property="rid"></id>
+        </collection>
+    </resultMap>
+
+
+
+
+
+
+
+
+
+</mapper>
