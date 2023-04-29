@@ -1,0 +1,22 @@
+@import './base.css';
+
+#app {
+  margin: 0 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  font-weight: normal;
+}
+
+
+.green {
+  text-decoration: none;
+  color: hsla(160, 100%, 37%, 1);
+  transition: 0.4s;
+}
+
+head, body, html {
+  height: 100%;
+  width: 100%;
+}
+
